@@ -1,0 +1,321 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --ubl-blue: #017dc5;
+  --ubl-blue-dark: #00639c;
+  --ubl-navy: #032b4a;
+  --ubl-navy-mid: #0a3f66;
+  --ubl-sky: #4fb3e8;
+  --ubl-red: #c8102e;
+  --ubl-red-soft: #fce9ec;
+  --ubl-soft: #e7f3fb;
+  --ink: #142033;
+  --muted: #6a7b8d;
+  --line: #d0deea;
+  --line-strong: #b7c9d9;
+  --surface: #ffffff;
+  --bg: #e8eef4;
+  --ok: #0b7a4b;
+  --warn: #a65d00;
+  --radius: 8px;
+  --shadow: 0 1px 2px rgba(3, 43, 74, 0.05), 0 8px 24px rgba(3, 43, 74, 0.06);
+  --shadow-lg: 0 12px 40px rgba(3, 43, 74, 0.14);
+}
+
+html {
+  font-size: 15px;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  color: var(--ink);
+  background: var(--bg);
+  font-size: 14px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #9bb4c8 transparent;
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@layer components {
+  .animate-fade-up {
+    animation: fade-up 0.35s ease both;
+  }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    min-height: 40px;
+    border-radius: 6px;
+    padding: 0.55rem 1rem;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #fff;
+    background: var(--ubl-blue);
+    border: 1px solid var(--ubl-blue-dark);
+    transition: background 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .btn:hover {
+    background: var(--ubl-blue-dark);
+    box-shadow: 0 4px 12px rgba(1, 125, 197, 0.28);
+  }
+
+  .btn:disabled {
+    opacity: 0.45;
+    pointer-events: none;
+  }
+
+  .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    min-height: 40px;
+    border-radius: 6px;
+    padding: 0.55rem 1rem;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--ubl-navy);
+    background: #fff;
+    border: 1px solid var(--line-strong);
+    transition: 0.15s ease;
+  }
+
+  .btn-secondary:hover {
+    background: var(--ubl-soft);
+    border-color: var(--ubl-blue);
+    color: var(--ubl-blue-dark);
+  }
+
+  .btn-danger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    min-height: 40px;
+    border-radius: 6px;
+    padding: 0.55rem 1rem;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #fff;
+    background: var(--ubl-red);
+    border: 1px solid #a40d24;
+  }
+
+  .btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    border-radius: 6px;
+    padding: 0.4rem 0.7rem;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ubl-blue-dark);
+  }
+
+  .btn-ghost:hover {
+    background: var(--ubl-soft);
+  }
+
+  .field {
+    width: 100%;
+    min-height: 42px;
+    border-radius: 6px;
+    border: 1px solid var(--line-strong);
+    background: #fff;
+    padding: 0.6rem 0.85rem;
+    font-size: 14px;
+    color: var(--ink);
+    outline: none;
+    transition: 0.15s ease;
+  }
+
+  .field:hover {
+    border-color: #9eb6c9;
+  }
+
+  .field:focus {
+    border-color: var(--ubl-blue);
+    box-shadow: 0 0 0 3px rgba(1, 125, 197, 0.15);
+  }
+
+  .field:disabled {
+    background: #f3f6f9;
+    color: #7a8b9b;
+  }
+
+  .label {
+    display: block;
+    margin-bottom: 0.35rem;
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #5d7083;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 4px;
+    padding: 0.18rem 0.5rem;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .badge-ok {
+    background: #e7f6ee;
+    color: var(--ok);
+  }
+
+  .badge-warn {
+    background: #fff3e0;
+    color: var(--warn);
+  }
+
+  .badge-danger {
+    background: var(--ubl-red-soft);
+    color: var(--ubl-red);
+  }
+
+  .badge-info {
+    background: var(--ubl-soft);
+    color: var(--ubl-blue-dark);
+  }
+
+  .table-wrap {
+    overflow-x: auto;
+  }
+
+  .data-table {
+    width: 100%;
+    min-width: 680px;
+    border-collapse: separate;
+    border-spacing: 0;
+    text-align: left;
+    font-size: 13.5px;
+  }
+
+  .data-table thead th {
+    background: #f2f7fb;
+    color: var(--ubl-navy);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .data-table td {
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid #e6eef5;
+    vertical-align: middle;
+  }
+
+  .data-table tbody tr:hover td {
+    background: #f7fbfe;
+  }
+
+  .bank-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    line-height: 1.25;
+    color: var(--ubl-navy);
+    letter-spacing: -0.01em;
+  }
+
+  .bank-subtitle {
+    font-size: 0.9rem;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .bank-eyebrow {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ubl-blue);
+  }
+
+  .sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    border-radius: 6px;
+    padding: 0.62rem 0.75rem;
+    font-size: 13.5px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.72);
+    transition: 0.15s ease;
+  }
+
+  .sidebar-link:hover {
+    background: rgba(255, 255, 255, 0.07);
+    color: #fff;
+  }
+
+  .sidebar-link.active {
+    background: var(--ubl-blue);
+    color: #fff;
+    font-weight: 600;
+    box-shadow: inset 3px 0 0 #fff;
+  }
+
+  .metric-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    background: var(--ubl-soft);
+    color: var(--ubl-blue-dark);
+    flex-shrink: 0;
+  }
+
+  .topbar-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    border-radius: 999px;
+    background: var(--ubl-soft);
+    color: var(--ubl-navy);
+    padding: 0.3rem 0.7rem;
+    font-size: 12px;
+    font-weight: 600;
+  }
+}

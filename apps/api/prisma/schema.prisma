@@ -1,0 +1,457 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  SECURITY_ADMIN
+  SYSTEM_ADMIN
+  BRANCH_MANAGER
+  BOM
+  DISTRICT_OPERATIONS_MANAGER
+  REGIONAL_OPERATIONS_MANAGER
+  CLUSTER_SECURITY_HEAD
+  DIVISIONAL_HEAD_SECURITY
+}
+
+enum DeploymentCategory {
+  PERMANENT
+  REPLACEMENT
+  TEMPORARY
+}
+
+enum GuardCategory {
+  EX_SERVICE_MAN
+  CIVILIAN
+}
+
+enum GuardStatus {
+  ACTIVE
+  REPLACED
+  TERMINATED
+}
+
+enum YesNo {
+  YES
+  NO
+}
+
+enum ShiftType {
+  DAY
+  NIGHT
+}
+
+enum AttendancePeriodStatus {
+  PENDING
+  DRAFT
+  SUBMITTED
+  CHANGE_REQUESTED
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum DeploymentRequestType {
+  NEW
+  REPLACEMENT
+  ADDITIONAL
+}
+
+enum InspectionRating {
+  ABOVE_ACCEPTABLE
+  ACCEPTABLE
+  MARGINAL_ACCEPTABLE
+  BELOW_ACCEPTABLE
+}
+
+enum ComplaintCategory {
+  BAS
+  CCTV
+}
+
+enum ComplaintStatus {
+  OPENED
+  CLOSED
+}
+
+enum RecorderType {
+  DVR
+  NVR
+}
+
+enum DocumentType {
+  DEPLOYMENT_LETTER
+  EMPLOYMENT_CARD
+  PASSPORT_PHOTO
+  POLICE_VERIFICATION
+  TRAINING_CERTIFICATE
+  CNIC_NADRA_VERISYS
+  LICENSE
+}
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  passwordHash String
+  fullName     String
+  role         UserRole
+  branchId     String?
+  branch       Branch?   @relation(fields: [branchId], references: [id])
+  /// Scope for Cluster Security Head
+  clusterId    String?
+  cluster      Cluster?  @relation(fields: [clusterId], references: [id])
+  /// Scope for Regional / District Operations
+  regionId     String?
+  region       Region?   @relation(fields: [regionId], references: [id])
+  isActive     Boolean   @default(true)
+  totpSecret   String?
+  totpEnabled  Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  initiatedGuards       Guard[]                  @relation("GuardInitiator")
+  attendancePeriods     AttendancePeriod[]       @relation("AttendanceSubmitter")
+  changeRequests        AttendanceChangeRequest[] @relation("ChangeRequester")
+  changeApprovals       AttendanceChangeRequest[] @relation("ChangeApprover")
+  deploymentRequests    DeploymentRequest[]      @relation("DeploymentRequester")
+  deploymentApprovals   DeploymentApproval[]
+  inspections           Inspection[]             @relation("InspectionSubmitter")
+  auditLogs             AuditLog[]
+
+  @@index([role])
+  @@index([branchId])
+  @@index([clusterId])
+  @@index([regionId])
+}
+
+model Region {
+  id        String    @id @default(uuid())
+  code      String    @unique
+  name      String
+  clusters  Cluster[]
+  users     User[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Cluster {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  name      String
+  regionId  String
+  region    Region   @relation(fields: [regionId], references: [id])
+  branches  Branch[]
+  users     User[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([regionId])
+}
+
+model Branch {
+  id           String   @id @default(uuid())
+  code         String   @unique
+  name         String
+  clusterId    String
+  cluster      Cluster  @relation(fields: [clusterId], references: [id])
+  address      String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  users              User[]
+  guards             Guard[]
+  attendancePeriods  AttendancePeriod[]
+  deploymentRequests DeploymentRequest[]
+  inspections        Inspection[]
+  cctvBasInventories CctvBasInventory[]
+  complaints         Complaint[]
+
+  @@index([clusterId])
+}
+
+model Vendor {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  guards    Guard[]
+}
+
+model Guard {
+  id                  String             @id @default(uuid())
+  /// System-generated unique Guard ID = 13-digit CNIC (digits only)
+  guardId             String             @unique
+  fullName            String
+  cnicNumber          String             @unique
+  cnicExpiryDate      DateTime
+  contactMobile       String
+  vendorId            String
+  vendor              Vendor             @relation(fields: [vendorId], references: [id])
+  weaponType          String
+  licenseExpiryDate   DateTime?
+  guardCategory       GuardCategory
+  deploymentCategory  DeploymentCategory
+  deploymentLocation  String
+  branchId            String
+  branch              Branch             @relation(fields: [branchId], references: [id])
+  dateOfJoining       DateTime
+  trainingStatus      YesNo
+  policeVerification  YesNo
+  nadraVerisys        YesNo
+  status              GuardStatus        @default(ACTIVE)
+  initiatorId         String
+  initiator           User               @relation("GuardInitiator", fields: [initiatorId], references: [id])
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+
+  familyMembers      GuardFamilyMember[]
+  documents          GuardDocument[]
+  attendanceEntries  AttendanceEntry[]
+  deploymentRequests DeploymentRequest[]
+
+  @@index([branchId])
+  @@index([vendorId])
+  @@index([status])
+  @@index([fullName])
+}
+
+model GuardFamilyMember {
+  id         String    @id @default(uuid())
+  guardId    String
+  guard      Guard     @relation(fields: [guardId], references: [id], onDelete: Cascade)
+  name       String
+  cnicNumber String?
+  dateOfBirth DateTime?
+  relation   String
+  createdAt  DateTime  @default(now())
+
+  @@index([guardId])
+}
+
+model GuardDocument {
+  id         String       @id @default(uuid())
+  guardId    String
+  guard      Guard        @relation(fields: [guardId], references: [id], onDelete: Cascade)
+  type       DocumentType
+  fileName   String
+  filePath   String
+  mimeType   String?
+  expiryDate DateTime?
+  uploadedAt DateTime     @default(now())
+
+  @@unique([guardId, type])
+  @@index([expiryDate])
+}
+
+model AttendancePeriod {
+  id              String                 @id @default(uuid())
+  branchId        String
+  branch          Branch                 @relation(fields: [branchId], references: [id])
+  month           Int
+  year            Int
+  status          AttendancePeriodStatus @default(PENDING)
+  submittedAt     DateTime?
+  submittedById   String?
+  submittedBy     User?                  @relation("AttendanceSubmitter", fields: [submittedById], references: [id])
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+
+  entries         AttendanceEntry[]
+  changeRequests  AttendanceChangeRequest[]
+
+  @@unique([branchId, month, year])
+  @@index([status])
+}
+
+model AttendanceEntry {
+  id        String           @id @default(uuid())
+  periodId  String
+  period    AttendancePeriod @relation(fields: [periodId], references: [id], onDelete: Cascade)
+  guardId   String
+  guard     Guard            @relation(fields: [guardId], references: [id])
+  fromDate  DateTime
+  toDate    DateTime
+  shift     ShiftType
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  @@index([periodId])
+  @@index([guardId])
+}
+
+model AttendanceChangeRequest {
+  id           String           @id @default(uuid())
+  periodId     String
+  period       AttendancePeriod @relation(fields: [periodId], references: [id], onDelete: Cascade)
+  requestedById String
+  requestedBy  User             @relation("ChangeRequester", fields: [requestedById], references: [id])
+  comment      String
+  status       ApprovalStatus   @default(PENDING)
+  reviewedById String?
+  reviewedBy   User?            @relation("ChangeApprover", fields: [reviewedById], references: [id])
+  reviewComment String?
+  reviewedAt   DateTime?
+  payloadJson  Json
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  @@index([periodId])
+  @@index([status])
+}
+
+model DeploymentRequest {
+  id              String                @id @default(uuid())
+  referenceId     String?               @unique
+  deploymentId    String?               @unique
+  requestType     DeploymentRequestType
+  branchId        String
+  branch          Branch                @relation(fields: [branchId], references: [id])
+  guardId         String?
+  guard           Guard?                @relation(fields: [guardId], references: [id])
+  justification   String                @db.Text
+  status          ApprovalStatus        @default(PENDING)
+  currentStep     Int                   @default(1)
+  requesterId     String
+  requester       User                  @relation("DeploymentRequester", fields: [requesterId], references: [id])
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+
+  approvals DeploymentApproval[]
+
+  @@index([branchId])
+  @@index([status])
+}
+
+model DeploymentApproval {
+  id          String            @id @default(uuid())
+  requestId   String
+  request     DeploymentRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  step        Int
+  approverId  String
+  approver    User              @relation(fields: [approverId], references: [id])
+  status      ApprovalStatus    @default(PENDING)
+  comment     String?
+  actedAt     DateTime?
+  createdAt   DateTime          @default(now())
+
+  @@unique([requestId, step])
+  @@index([approverId])
+}
+
+model Inspection {
+  id              String           @id @default(uuid())
+  branchId        String
+  branch          Branch           @relation(fields: [branchId], references: [id])
+  submittedById   String
+  submittedBy     User             @relation("InspectionSubmitter", fields: [submittedById], references: [id])
+  guardRating     InspectionRating
+  observations    String           @db.Text
+  actionPlan      String?          @db.Text
+  actionPlanAt    DateTime?
+  isClosed        Boolean          @default(false)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@index([branchId])
+  @@index([isClosed])
+}
+
+model CctvBasInventory {
+  id                String       @id @default(uuid())
+  branchId          String
+  branch            Branch       @relation(fields: [branchId], references: [id])
+  basVendorName     String
+  dedicatedPtclLine YesNo
+  basSimNumber      String?
+  recorderType      RecorderType
+  cameraCount       Int
+  recordingDays     Int
+  warrantyStatus    YesNo
+  mirroringStatus   YesNo
+  installationDate  DateTime?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  @@index([branchId])
+}
+
+model Complaint {
+  id             String           @id @default(uuid())
+  branchId       String
+  branch         Branch           @relation(fields: [branchId], references: [id])
+  complaintDate  DateTime
+  ticketNumber   String
+  category       ComplaintCategory
+  status         ComplaintStatus  @default(OPENED)
+  resolutionDate DateTime?
+  comments       String?          @db.Text
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@index([branchId])
+  @@index([status])
+  @@index([ticketNumber])
+}
+
+model LovItem {
+  id        String   @id @default(uuid())
+  category  String
+  code      String
+  label     String
+  isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([category, code])
+  @@index([category])
+}
+
+model SystemConfig {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     Json
+  updatedAt DateTime @updatedAt
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id])
+  action     String
+  entity     String
+  entityId   String?
+  beforeJson Json?
+  afterJson  Json?
+  ipAddress  String?
+  createdAt  DateTime @default(now())
+
+  @@index([entity, entityId])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String?
+  role      UserRole?
+  title     String
+  body      String    @db.Text
+  isRead    Boolean   @default(false)
+  metaJson  Json?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@index([role])
+  @@index([isRead])
+}

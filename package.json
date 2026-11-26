@@ -1,0 +1,23 @@
+{
+  "name": "security-management-system",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Centralized Security Management System — Guard, Attendance, Deployment, Inspection, CCTV/BAS",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspaces --if-present",
+    "dev:api": "npm run dev -w @sms/api",
+    "dev:web": "npm run dev -w @sms/web",
+    "build": "npm run build -w @sms/shared && npm run build -w @sms/api && npm run build -w @sms/web",
+    "db:generate": "npm run prisma:generate -w @sms/api",
+    "db:migrate": "npm run prisma:migrate -w @sms/api",
+    "db:seed": "npm run prisma:seed -w @sms/api",
+    "lint": "npm run lint --workspaces --if-present"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
